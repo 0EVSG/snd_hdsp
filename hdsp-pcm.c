@@ -1044,7 +1044,7 @@ hdsp_pcm_attach(device_t dev)
 {
 	char status[SND_STATUSLEN];
 	struct sc_pcminfo *scp;
-	const char *buf;
+	char desc[64];
 	uint32_t pcm_flags;
 	int err;
 	int play, rec;
@@ -1052,13 +1052,16 @@ hdsp_pcm_attach(device_t dev)
 	scp = device_get_ivars(dev);
 	scp->ih = &hdsp_pcm_intr;
 
+	bzero(desc, sizeof(desc));
 	if (scp->hc->ports & HDSP_CHAN_9632_ALL)
-		buf = "9632";
+		snprintf(desc, sizeof(desc), "HDSP 9632 [%s]",
+		    scp->hc->descr);
 	else if (scp->hc->ports & HDSP_CHAN_9652_ALL)
-		buf = "9652";
+		snprintf(desc, sizeof(desc), "HDSP 9652 [%s]",
+		    scp->hc->descr);
 	else
-		buf = "?";
-	device_set_descf(dev, "HDSP %s [%s]", buf, scp->hc->descr);
+		snprintf(desc, sizeof(desc), "HDSP ? [%s]", scp->hc->descr);
+	device_set_desc_copy(dev, desc);
 
 	/*
 	 * We don't register interrupt handler with snd_setup_intr
@@ -1089,10 +1092,10 @@ hdsp_pcm_attach(device_t dev)
 		scp->chnum++;
 	}
 
-	snprintf(status, SND_STATUSLEN, "port 0x%jx irq %jd on %s",
+	snprintf(status, SND_STATUSLEN, "at io 0x%jx irq %jd %s",
 	    rman_get_start(scp->sc->cs),
 	    rman_get_start(scp->sc->irq),
-	    device_get_nameunit(device_get_parent(dev)));
+	    PCM_KLDSTRING(snd_hdsp));
 	pcm_setstatus(dev, status);
 
 	mixer_init(dev, &hdspmixer_class, scp);
