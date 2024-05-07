@@ -35,7 +35,7 @@
 #include <sys/libkern.h>
 
 #include <dev/sound/pcm/sound.h>
-#include <dev/sound/pci/hdsp.h>
+#include <hdsp.h>
 #include <dev/sound/chip.h>
 
 #include <dev/pci/pcireg.h>
