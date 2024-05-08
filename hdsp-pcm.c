@@ -406,32 +406,35 @@ hdsp_running(struct sc_info *sc)
 	device_t *devlist;
 	int devcount;
 	int i, j;
-	int err;
+	int running;
 
-	if ((err = device_get_children(sc->dev, &devlist, &devcount)) != 0)
-		goto bad;
+	running = 0;
 
-	for (i = 0; i < devcount; i++) {
+	devlist = NULL;
+	devcount = 0;
+
+	if (device_get_children(sc->dev, &devlist, &devcount) != 0)
+		running = 1;	/* On error, avoid channel config changes. */
+
+	for (i = 0; running == 0 && i < devcount; i++) {
 		scp = device_get_ivars(devlist[i]);
 		for (j = 0; j < scp->chnum; j++) {
 			ch = &scp->chan[j];
-			if (ch->run)
-				goto bad;
+			if (ch->run) {
+				running = 1;
+				break;
+			}
 		}
 	}
 
-	free(devlist, M_TEMP);
-
-	return (0);
-bad:
-
 #if 0
-	device_printf(sc->dev, "hdsp is running\n");
+	if (running == 1)
+		device_printf(sc->dev, "hdsp is running\n");
 #endif
 
 	free(devlist, M_TEMP);
 
-	return (1);
+	return (running);
 }
 
 static void
